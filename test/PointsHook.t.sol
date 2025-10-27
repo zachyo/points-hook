@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {Test} from "forge-std/Test.sol";
+import {Test, console2} from "forge-std/Test.sol";
 
 import {Deployers} from "@uniswap/v4-core/test/utils/Deployers.sol";
 import {PoolSwapTest} from "v4-core/test/PoolSwapTest.sol";
@@ -70,7 +70,7 @@ contract TestPointsHook is Test, Deployers, ERC1155TokenReceiver {
         uint160 sqrtPriceAtTickLower = TickMath.getSqrtPriceAtTick(-60);
         uint160 sqrtPriceAtTickUpper = TickMath.getSqrtPriceAtTick(60);
 
-        uint256 ethToAdd = 0.1 ether;
+        uint256 ethToAdd = 20 ether;
         uint128 liquidityDelta = LiquidityAmounts.getLiquidityForAmount0(
             SQRT_PRICE_1_1,
             sqrtPriceAtTickUpper,
@@ -125,6 +125,122 @@ contract TestPointsHook is Test, Deployers, ERC1155TokenReceiver {
             address(this),
             poolIdUint
         );
+        console2.log("pointsBalanceAfterSwap1", pointsBalanceAfterSwap);
+
         assertEq(pointsBalanceAfterSwap - pointsBalanceOriginal, 2 * 10 ** 14);
     }
+
+    function test_milestone1() public {
+        uint256 poolIdUint = uint256(PoolId.unwrap(key.toId()));
+        uint256 pointsBalanceOriginal = hook.balanceOf(
+            address(this),
+            poolIdUint
+        );
+
+        // Set user address in hook data
+        bytes memory hookData = abi.encode(address(this));
+
+        // Now we swap above 1 ether
+        // We will swap 1.001 ether for tokens
+        // We should get 20% of 1.001 * 10**18 points plus bonus points of 100 points
+        // = (2.002 * 10**17) + 100
+        swapRouter.swap{value: 1.001 ether}(
+            key,
+            SwapParams({
+                zeroForOne: true,
+                amountSpecified: -1.001 ether, // Exact input for output swap
+                sqrtPriceLimitX96: TickMath.MIN_SQRT_PRICE + 1
+            }),
+            PoolSwapTest.TestSettings({
+                takeClaims: false,
+                settleUsingBurn: false
+            }),
+            hookData
+        );
+        uint256 pointsBalanceAfterSwap1 = hook.balanceOf(
+            address(this),
+            poolIdUint
+        );
+        console2.log("pointsBalanceOriginal", pointsBalanceOriginal);
+        console2.log("pointsBalanceAfterSwap1", pointsBalanceAfterSwap1);
+
+        assertEq(
+            pointsBalanceAfterSwap1 - pointsBalanceOriginal,
+            (2.002 * 10 ** 17) + 100
+        );
+
+        // MILESTONE 2
+        // Now we swap above 5 ether
+        // We will swap 5.001 ether for tokens
+        // We should get 20% of 5.001 * 10**18 points plus bonus points of 100 points
+        // = (10.002 * 10**17) + 500
+        swapRouter.swap{value: 5.001 ether}(
+            key,
+            SwapParams({
+                zeroForOne: true,
+                amountSpecified: -5.001 ether, // Exact input for output swap
+                sqrtPriceLimitX96: TickMath.MIN_SQRT_PRICE + 1
+            }),
+            PoolSwapTest.TestSettings({
+                takeClaims: false,
+                settleUsingBurn: false
+            }),
+            hookData
+        );
+        uint256 pointsBalanceAfterSwap2 = hook.balanceOf(
+            address(this),
+            poolIdUint
+        );
+        uint256 volumeTraded = hook.totalVolume(address(this), poolIdUint);
+        console2.log("pointsBalanceAfterSwap2", pointsBalanceAfterSwap2);
+        console2.log("total volumeTraded", volumeTraded);
+
+        assertEq(
+            pointsBalanceAfterSwap2 - pointsBalanceAfterSwap1,
+            (10.002 * 10 ** 17) + 500
+        );
+    }
+
+// this is to test milestones seperately
+    // function test_milestone2() public {
+    //     uint256 poolIdUint = uint256(PoolId.unwrap(key.toId()));
+    //     uint256 pointsBalanceOriginal = hook.balanceOf(
+    //         address(this),
+    //         poolIdUint
+    //     );
+
+    //     // Set user address in hook data
+    //     bytes memory hookData = abi.encode(address(this));
+
+    //     // Now we swap above 5 ether
+    //     // We will swap 5.001 ether for tokens
+    //     // We should get 20% of 5.001 * 10**18 points plus bonus points of 100 points
+    //     // = (10.002 * 10**17) + 500
+    //     swapRouter.swap{value: 5.001 ether}(
+    //         key,
+    //         SwapParams({
+    //             zeroForOne: true,
+    //             amountSpecified: -5.001 ether, // Exact input for output swap
+    //             sqrtPriceLimitX96: TickMath.MIN_SQRT_PRICE + 1
+    //         }),
+    //         PoolSwapTest.TestSettings({
+    //             takeClaims: false,
+    //             settleUsingBurn: false
+    //         }),
+    //         hookData
+    //     );
+    //     uint256 pointsBalanceAfterSwap = hook.balanceOf(
+    //         address(this),
+    //         poolIdUint
+    //     );
+    //     uint256 volumeTraded = hook.totalVolume(address(this), poolIdUint);
+    //     console2.log("pointsBalanceOriginal", pointsBalanceOriginal);
+    //     console2.log("pointsBalanceAfterSwap", pointsBalanceAfterSwap);
+    //     console2.log("volumeTraded", volumeTraded);
+
+    //     assertEq(
+    //         pointsBalanceAfterSwap - pointsBalanceOriginal,
+    //         (10.002 * 10 ** 17) + 500 + 100 // 100 is for previous swap
+    //     );
+    // }
 }
