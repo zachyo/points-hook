@@ -166,7 +166,7 @@ contract TestPointsHook is Test, Deployers, ERC1155TokenReceiver {
 
         assertEq(
             pointsBalanceAfterSwap1 - pointsBalanceOriginal,
-            (2.002 * 10 ** 17) + 100
+            (2.002 * 10 ** 17) + (100 * 10 ** 18)
         );
 
         // MILESTONE 2
@@ -197,7 +197,7 @@ contract TestPointsHook is Test, Deployers, ERC1155TokenReceiver {
 
         assertEq(
             pointsBalanceAfterSwap2 - pointsBalanceAfterSwap1,
-            (10.002 * 10 ** 17) + 500
+            (10.002 * 10 ** 17) + (500 * 10 ** 18)
         );
     }
 

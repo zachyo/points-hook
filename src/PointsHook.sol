@@ -23,8 +23,8 @@ contract PointsHook is BaseHook, ERC1155 {
     uint256 public constant MILESTONE_2 = 5 ether; // 5 ETH
 
     // Milestone bonus points
-    uint256 public constant BONUS_1 = 100; // 100 points
-    uint256 public constant BONUS_2 = 500; // 500 points
+    uint256 public constant BONUS_1 = 100 * 10 ** 18; // 100 points
+    uint256 public constant BONUS_2 = 500 * 10 ** 18; // 500 points
 
     constructor(IPoolManager _manager) BaseHook(_manager) {}
 
