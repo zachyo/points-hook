@@ -48,5 +48,5 @@ contract DeployHook is Script {
 }
 
 
-// Live run: forge script script/DeployHook.s.sol --rpc-url $RPC_URL --chain-id <<chain of your choice>> --broadcast --verify
+// Live run: forge script script/DeployHook.s.sol --rpc-url $FORK_URL --chain-id <<chain of your choice>> --broadcast --verify
 //  remove broadcast and verify flags for testing purposes
